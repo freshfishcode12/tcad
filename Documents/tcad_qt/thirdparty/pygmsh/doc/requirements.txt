@@ -1,0 +1,4 @@
+mock
+numpy
+sphinxcontrib-napoleon
+sphinx-autodoc-typehints
