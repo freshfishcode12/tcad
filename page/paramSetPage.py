@@ -50,17 +50,6 @@ class ParameterSettingPage(QWidget):
         self.table.setItem(row_position, 2, QTableWidgetItem(value))
         self.table.setItem(row_position, 3, QTableWidgetItem(desc))
 
-    # def check_last_row(self, row, column):
-    #     """监控是否在最后一行填了内容"""
-    #     if row == self.table.rowCount() - 1:
-    #         # 检查这一行有没有被填写
-    #         for col in range(4):
-    #             item = self.table.item(row, col)
-    #             if item and item.text().strip() != "":
-    #                 # 在最后一行填了内容，就新增一行
-    #                 self.add_row()
-    #                 break
-
     def check_last_row(self, row, column):
         """监控表达式变动，解析并计算带单位表达式"""
         if column == 1 and row != self.table.rowCount() - 1:  # 第二列表达式修改
@@ -133,7 +122,6 @@ class ParameterSettingPage(QWidget):
             self.move_row_up()
         elif action == move_down_action:
             self.move_row_down()
-
 
     def open_menu(self, position):
         """右键菜单"""
@@ -277,6 +265,38 @@ class ParameterSettingPage(QWidget):
                 except:
                     continue
         return variables
+    
+    def get_parameters(self):
+        """
+        返回当前表格中定义的所有有效参数：
+        格式为字典：{name: {"value": float, "unit": str, "desc": str}}
+        """
+        parameters = {}
+        row_count = self.table.rowCount()
+        for row in range(row_count - 1):  # 忽略最后一行空白行
+            name_item = self.table.item(row, 0)
+            value_item = self.table.item(row, 2)
+            desc_item = self.table.item(row, 3)
+
+            if name_item and value_item:
+                name = name_item.text().strip()
+                value_text = value_item.text().strip()
+                desc = desc_item.text().strip() if desc_item else ""
+
+                parts = value_text.split()
+                try:
+                    value = float(parts[0])
+                    unit = parts[1] if len(parts) > 1 else "1"
+                    parameters[name] = {
+                        "value": value,
+                        "unit": unit,
+                        "desc": desc
+                    }
+                except:
+                    continue  # 跳过无效数据行
+
+        return parameters
+
 
 
 

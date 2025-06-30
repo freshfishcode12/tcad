@@ -1,0 +1,13 @@
+*.pyc
+external/getrf/build/
+external/SuperLU_4.3/
+examples/*/*.out
+testing/*.out
+testing/*.flps
+testing/*.vtu
+testing/*.vtm
+testing/*.visit
+testing/*.msh
+
+# Ignore generated directories
+linux*/

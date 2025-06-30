@@ -1,0 +1,21 @@
+[submodule "external/symdiff"]
+	path = external/symdiff
+	url = ../symdiff.git
+[submodule "external/eigen"]
+	path = external/eigen
+	url = https://gitlab.com/libeigen/eigen.git
+[submodule "external/boostorg/multiprecision"]
+	path = external/boostorg/multiprecision
+	url = https://github.com/boostorg/multiprecision
+[submodule "external/boostorg/math"]
+	path = external/boostorg/math
+	url = https://github.com/boostorg/math
+[submodule "external/umfpack_lgpl"]
+	path = external/umfpack_lgpl
+	url = ../umfpack_lgpl
+[submodule "external/boostorg/config"]
+	path = external/boostorg/config
+	url = https://github.com/boostorg/config
+[submodule "external/superlu"]
+	path = external/superlu
+	url = https://github.com/xiaoyeli/superlu

@@ -5,27 +5,14 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtWidgets import QComboBox
 from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIcon, QPainter
 import sys
-from pyvistaqt import QtInteractor
-import pyvista as pv
 
 from page.paramSetPage import ParameterSettingPage
 from page.geoSetPage_2d import GeometrySettingPage_2d
 from page.geoSetPage_3d import GeometrySettingPage_3d
-from draw3D import ThreeDGraphicsView
-
-# class ZoomableGraphicsView(QGraphicsView):
-#     def __init__(self):
-#         super().__init__()
-#         self.setDragMode(QGraphicsView.ScrollHandDrag)
-#         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
-#         self.setRenderHint(QPainter.Antialiasing)
-
-#     def wheelEvent(self, event):
-#         factor = 1.25 if event.angleDelta().y() > 0 else 0.8
-#         self.scale(factor, factor)
+from page.customPlotter import CustomPlotter
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -59,11 +46,7 @@ class MainWindow(QMainWindow):
         self.graphics_layout = QVBoxLayout(self.graphics_container)
         self.graphics_layout.setContentsMargins(0, 0, 0, 0)
 
-        # self.graphics_view = ZoomableGraphicsView()
-        # self.graphics_scene = QGraphicsScene()
-        # self.graphics_view.setScene(self.graphics_scene)
-        # self.graphics_layout.addWidget(self.graphics_view)
-        self.plotter = QtInteractor(self.graphics_container)
+        self.plotter = CustomPlotter(self.graphics_container)
         self.graphics_layout.addWidget(self.plotter)
 
         right_splitter.addWidget(self.graphics_container)
@@ -82,6 +65,9 @@ class MainWindow(QMainWindow):
         self.init_settings_pages()
         self.geometry_pages = {}
 
+        # 共享图形缓存
+        self.shared_cache = []
+
     def init_tree(self):
         '''
         初始化界面最左面的树形结构
@@ -92,6 +78,8 @@ class MainWindow(QMainWindow):
 
         self.component = QTreeWidgetItem(self.tree, ["组件"])
         self.geometry_root = QTreeWidgetItem(self.component, ["几何"])
+
+        self.adulteration = QTreeWidgetItem(self.tree, ["掺杂"])
 
         self.tree.expandAll()
 
@@ -230,7 +218,7 @@ class MainWindow(QMainWindow):
                             self.info_box.append(f"名称 {new_name} 已存在，复制失败！")
                         else:
                             old_page = self.geometry_pages[shape_name]
-                            new_page = GeometrySettingPage_2d(self.graphics_scene, old_page.shape_type, new_name)
+                            new_page = GeometrySettingPage_2d(self.graphics_scene, self.param_page, old_page.shape_type, new_name)
 
                             for key, input_field in old_page.inputs.items():
                                 if key in new_page.inputs:
@@ -305,7 +293,7 @@ class MainWindow(QMainWindow):
                             self.info_box.append(f"名称 {new_name} 已存在，复制失败！")
                         else:
                             old_page = self.geometry_pages[shape_name]
-                            new_page = GeometrySettingPage_3d(self.plotter, old_page.shape_type, new_name)
+                            new_page = GeometrySettingPage_3d(self.plotter, self.param_page, old_page.shape_type, new_name,self.shared_cache)
 
                             for key, input_field in old_page.inputs.items():
                                 if key in new_page.inputs:
@@ -338,6 +326,7 @@ class MainWindow(QMainWindow):
                         page = self.geometry_pages.pop(shape_name)
                         self.settings_stack.removeWidget(page)
                         self.geometry_root.removeChild(item)
+                        self.adulteration.removeChild(item)
                         self.info_box.append(f"图形 {shape_name} 已删除")
 
     def add_new_shape(self, shape_type, shape_name):
@@ -351,11 +340,13 @@ class MainWindow(QMainWindow):
 
         shape_item = QTreeWidgetItem(self.geometry_root, [shape_name])
         self.tree.expandItem(self.geometry_root)
+        new_item = QTreeWidgetItem(self.adulteration, [shape_name])
+        self.tree.expandItem(self.adulteration)
 
         if self.is_2d:
-            page = GeometrySettingPage_2d(self.plotter, shape_type, shape_name)
+            page = GeometrySettingPage_2d(self.plotter, self.param_page, shape_type, shape_name)
         else:
-            page = GeometrySettingPage_3d(self.plotter, shape_type, shape_name) # 先使用2D的界面
+            page = GeometrySettingPage_3d(self.plotter, self.param_page, shape_type, shape_name,self.shared_cache) # 先使用2D的界面
         self.geometry_pages[shape_name] = page
         self.settings_stack.addWidget(page)
 

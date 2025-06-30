@@ -12,11 +12,12 @@ import meshio
 import pyvista as pv
 
 class GeometrySettingPage_2d(QWidget):
-    def __init__(self, graphics_scene, shape_type, shape_name):
+    def __init__(self, graphics_scene, parameters, shape_type, shape_name):
         super().__init__()
         self.plotter = graphics_scene
         self.shape_type = shape_type
         self.shape_name = shape_name
+        self.parameters = parameters
         layout = QVBoxLayout(self)
 
         # 参数设置区
@@ -51,12 +52,14 @@ class GeometrySettingPage_2d(QWidget):
 
     def draw_rectangle(self):
         try:
-            x = float(self.inputs["位置X"].text())
-            y = float(self.inputs["位置Y"].text())
-            l = float(self.inputs["宽度"].text())
-            h = float(self.inputs["高度"].text())
-            angle = float(self.inputs["旋转角度"].text())  # 角度（度）
-        except (KeyError, ValueError):
+            x = self.resolve_input_value(self.inputs["位置X"].text())
+            y = self.resolve_input_value(self.inputs["位置Y"].text())
+            l = self.resolve_input_value(self.inputs["宽度"].text())
+            h = self.resolve_input_value(self.inputs["高度"].text())
+            angle = self.resolve_input_value(self.inputs["旋转角度"].text())  # 角度（度）
+            if None in (x, y, l, h, angle):
+                return  # 任一解析失败则中止
+        except Exception:
             return
 
         # 计算矩形四个顶点
@@ -95,10 +98,12 @@ class GeometrySettingPage_2d(QWidget):
 
     def draw_circle(self):
         try:
-            x = float(self.inputs["圆心位置X"].text())
-            y = float(self.inputs["圆心位置Y"].text())
-            r = float(self.inputs["半径"].text())
-        except (KeyError, ValueError):
+            x = self.resolve_input_value(self.inputs["圆心位置X"].text())
+            y = self.resolve_input_value(self.inputs["圆心位置Y"].text())
+            r = self.resolve_input_value(self.inputs["半径"].text())
+            if None in (x, y, r):
+                return  # 任一解析失败则中止
+        except Exception:
             return
 
         self.plotter.clear()
@@ -124,4 +129,13 @@ class GeometrySettingPage_2d(QWidget):
             color='black'            # 颜色
         )
 
-
+    def resolve_input_value(self, text):
+        try:
+            # 尝试直接解析为数字
+            return float(text)
+        except ValueError:
+            # 解析失败：认为是参数名
+            param_info = self.parameters.get_parameters().get(text)
+            if param_info:
+                return float(param_info["value"])
+        return None  # 无法解析
